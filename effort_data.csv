@@ -1,0 +1,53 @@
+subsystem,module,task,effort,description
+Security,SynaProt,ROM Development, 11, "ROM development work on FPGA, covers LC transition, ATE, and OTP programming"
+Security,SynaProt,SPK Development, 12, SPK development work
+Security,SynaProt,QA, 13, QA work
+Security,SynaProt,Release, 14, Release work
+Security,AppCrypto,Design, 21, Design work
+Security,AppCrypto,Development, 22, Development work
+Security,AppCrypto,QA, 23, QA work
+Security,AppCrypto,Release, 24, Release work
+Security,Certification,Design, 31, Design work
+Security,Certification,Development, 32, Development work
+Security,Certification,QA, 33, QA work
+Security,Certification,Release, 34, Release work
+M Core,MCU Boot,Design, 41, Design work
+M Core,MCU Boot,Development, 42, Development work
+M Core,MCU Boot,QA, 43, QA work
+M Core,MCU Boot,Release, 44, Release work
+M Core,MCU APP,Design, 51, Design work
+M Core,MCU APP,Development, 52, Development work
+M Core,MCU APP,QA, 53, QA work
+M Core,MCU APP,Release, 54, Release work
+M Core,Power Management,Design, 61, Design work
+M Core,Power Management,Development, 62, Development work
+M Core,Power Management,QA, 63, QA work
+M Core,Power Management,Release, 64, Release work
+A Core,uBoot,Design, 71, Design work
+A Core,uBoot,Development, 72, Development work
+A Core,uBoot,QA, 73, QA work
+A Core,uBoot,Release, 74, Release work
+A Core,Kernel,Design, 81, Design work
+A Core,Kernel,Development, 82, Development work
+A Core,Kernel,QA, 83, QA work
+A Core,Kernel,Release, 84, Release work
+A Core,AIO,Design, 91, Design work
+A Core,AIO,Development, 92, Development work
+A Core,AIO,QA, 93, QA work
+A Core,AIO,Release, 94, Release work
+A Core,VIO,Design, 101, Design work
+A Core,VIO,Development, 102, Development work
+A Core,VIO,QA, 103, QA work
+A Core,VIO,Release, 104, Release work
+A Core,Peripherals,Design, 111, Design work
+A Core,Peripherals,Development, 112, Development work
+A Core,Peripherals,QA, 113, QA work
+A Core,Peripherals,Release, 114, Release work  
+M85, BL, Design, 121, Design work
+M85, BL, Development, 122, Development work
+M85, BL, QA, 123, QA work
+M85, BL, Release, 124, Release work
+M85, Flash, Design, 131, Design work
+M85, Flash, Development, 132, Development work
+M85, Flash, QA, 133, QA work
+M85, Flash, Release, 134, Release work

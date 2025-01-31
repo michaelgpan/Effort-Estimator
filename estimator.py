@@ -8,7 +8,7 @@ class Module:
     def __init__(self, name):
         self.name = name
         self.tasks = []
-        self._estimator = None  # 添加这个引用
+        self._estimator = None  # Add this reference
         
     def add_task(self, task_name, effort, description=""):
         task = Task(task_name, effort, description)
@@ -18,20 +18,20 @@ class Module:
     def get_total_effort(self):
         total = 0
         if hasattr(self, '_estimator') and self._estimator:
-            # 找到该模块所属的子系统
+            # Find the subsystem that contains this module
             for subsystem in self._estimator.subsystems:
                 if self in subsystem.modules:
                     subsystem_name = subsystem.name
-                    # 如果模块被禁用，直接返回0
+                    # If module is disabled, return 0
                     if not self._estimator.module_states[subsystem_name].get(self.name, True):
                         return 0
-                    # 计算所有任务的工作量
+                    # Calculate effort for all tasks
                     for task in self.tasks:
                         ratio = float(self._estimator.ui_vars[subsystem_name]['modules'][self.name]['tasks'][task.name]['ratio'].get()) / 100
                         total += task.effort * ratio
                     break
         else:
-            # 如果没有 estimator 引用，直接返回总和
+            # If no estimator reference, return raw sum
             total = sum(task.effort for task in self.tasks)
         return total
 
@@ -43,7 +43,7 @@ class Subsystem:
         
     def add_module(self, module_name):
         module = Module(module_name)
-        module._estimator = self._estimator  # 传递 estimator 引用
+        module._estimator = self._estimator  # Pass estimator reference
         self.modules.append(module)
         return module
         
@@ -63,30 +63,30 @@ class EffortEstimator:
         self.task_labels = {}
         self.subsys_effort_labels = {}
         self.mod_effort_labels = {}
-        self.subsystem_states = {}  # 存储子系统的开关状态
-        self.module_states = {}     # 存储模块的开关状态
-        self.task_states = {}       # 存储任务的开关状态
+        self.subsystem_states = {}  # Store subsystem toggle states
+        self.module_states = {}     # Store module toggle states
+        self.task_states = {}       # Store task toggle states
         
-        # 从CSV文件加载数据
+        # Load data from CSV file
         self.load_data_from_csv(csv_file_path)
         
     def load_data_from_csv(self, csv_file_path):
-        """从CSV文件加载系统结构和工作量数据"""
+        """Load system structure and effort data from CSV file"""
         import csv
         import os
         
         if not os.path.exists(csv_file_path):
-            raise FileNotFoundError(f"找不到CSV文件: {csv_file_path}")
+            raise FileNotFoundError(f"CSV file not found: {csv_file_path}")
             
-        # 使用字典来跟踪已创建的子系统和模块
+        # Use a dictionary to track created subsystems and modules
         subsystem_dict = {}
         module_dict = {}
         
         with open(csv_file_path, 'r', encoding='utf-8', newline='') as file:
             reader = csv.DictReader(file, 
-                                  quoting=csv.QUOTE_MINIMAL,  # 使用标准引号处理
-                                  quotechar='"',             # 指定引号字符
-                                  skipinitialspace=True)     # 跳过字段前的空格
+                                  quoting=csv.QUOTE_MINIMAL,  # Use standard quoting
+                                  quotechar='"',             # Specify quote character
+                                  skipinitialspace=True)     # Skip spaces before fields
             for row in reader:
                 subsystem_name = row['subsystem'].strip()
                 module_name = row['module'].strip()
@@ -94,27 +94,27 @@ class EffortEstimator:
                 effort = float(row['effort'])
                 description = row['description'].strip()
                 
-                # 如果子系统不存在，创建新的子系统
+                # If subsystem does not exist, create a new subsystem
                 if subsystem_name not in subsystem_dict:
                     subsystem = self.add_subsystem(subsystem_name)
                     subsystem._estimator = self
                     subsystem_dict[subsystem_name] = subsystem
                     
-                # 获取当前子系统
+                # Get the current subsystem
                 subsystem = subsystem_dict[subsystem_name]
                 
-                # 如果模块不存在，创建新的模块
+                # If module does not exist, create a new module
                 module_key = f"{subsystem_name}_{module_name}"
                 if module_key not in module_dict:
                     module = subsystem.add_module(module_name)
                     module_dict[module_key] = module
                     
-                # 获取当前模块
+                # Get the current module
                 module = module_dict[module_key]
                 
-                # 创建任务时包含描述信息
+                # Create task with description information
                 task = module.add_task(task_name, effort, description)
-                # 初始化任务状态
+                # Initialize task state
                 if subsystem_name not in self.task_states:
                     self.task_states[subsystem_name] = {}
                 if module_name not in self.task_states[subsystem_name]:
@@ -123,16 +123,16 @@ class EffortEstimator:
         
     def add_subsystem(self, subsystem_name):
         subsystem = Subsystem(subsystem_name)
-        subsystem._estimator = self  # 设置 estimator 引用
+        subsystem._estimator = self  # Set estimator reference
         self.subsystems.append(subsystem)
         self.subsystem_names.append(subsystem_name)
-        self.subsystem_states[subsystem_name] = True  # 默认开启
-        self.module_states[subsystem_name] = {}       # 初始化该子系统的模块状态字典
-        self.task_states[subsystem_name] = {}         # 初始化该子系统的任务状态字典
+        self.subsystem_states[subsystem_name] = True  # Default enabled
+        self.module_states[subsystem_name] = {}       # Initialize the module state dictionary for this subsystem
+        self.task_states[subsystem_name] = {}         # Initialize the task state dictionary for this subsystem
         return subsystem
         
     def get_total_effort(self):
-        """计算总工作量"""
+        """Calculate total effort"""
         return sum(
             subsystem.get_total_effort()
             for subsystem in self.subsystems
@@ -140,21 +140,21 @@ class EffortEstimator:
         )
         
     def display_summary(self):
-        print("\n软件工作量估算汇总:")
+        print("\nSoftware Effort Estimation Summary:")
         print("-" * 50)
         
         for subsystem in self.subsystems:
             if not self.subsystem_states.get(subsystem.name, True):
                 continue
                 
-            print(f"\n子系统: {subsystem.name}")
+            print(f"\nSubsystem: {subsystem.name}")
             subsystem_effort = 0
             
             for module in subsystem.modules:
                 if not self.module_states[subsystem.name].get(module.name, True):
                     continue
                     
-                print(f"  模块: {module.name}")
+                print(f"  Module: {module.name}")
                 module_effort = 0
                 
                 for task in module.tasks:
@@ -163,14 +163,14 @@ class EffortEstimator:
                     
                     task_effort = task.effort
                     module_effort += task_effort
-                    print(f"    任务: {task.name} - 工作量: {task_effort}")
+                    print(f"    Task: {task.name} - Effort: {task_effort}")
                 
-                print(f"  模块总工作量: {module_effort}")
+                print(f"  Module Total Effort: {module_effort}")
                 subsystem_effort += module_effort
                 
-            print(f"子系统总工作量: {subsystem_effort}")
+            print(f"Subsystem Total Effort: {subsystem_effort}")
             
-        print(f"\n总工作量: {self.get_total_effort()}")
+        print(f"\nTotal Project Effort: {self.get_total_effort()}")
 
     def create_ui(self):
         import tkinter as tk
@@ -179,22 +179,22 @@ class EffortEstimator:
         self.root = tk.Tk()
         self.root.title("Effort Estimation Control Panel")
         
-        # 初始化所有需要的字典
+        # Initialize all required dictionaries
         self.ui_vars = {subsystem_name: {} for subsystem_name in self.subsystem_names}
         self.task_labels = {}
         self.mod_effort_labels = {}
         
-        # 确保所有模块状态都被正确初始化
+        # Ensure all module states are properly initialized
         for subsystem_name in self.subsystem_names:
             self.mod_effort_labels[subsystem_name] = {}
-            # 初始化子系统变量
+            # Initialize subsystem variable
             self.ui_vars[subsystem_name]['var'] = tk.BooleanVar(value=True)
             self.ui_vars[subsystem_name]['modules'] = {}
             
-            # 预先初始化所有模块和任务的变量
+            # Pre-initialize all module and task variables
             subsystem = next(s for s in self.subsystems if s.name == subsystem_name)
             for module in subsystem.modules:
-                # 初始化模块状态
+                # Initialize module state
                 if subsystem_name not in self.module_states:
                     self.module_states[subsystem_name] = {}
                 self.module_states[subsystem_name][module.name] = True
@@ -208,15 +208,15 @@ class EffortEstimator:
                         'ratio': tk.StringVar(value="100")
                     }
         
-        # 创建主框架
+        # Create main frame
         main_frame = ttk.Frame(self.root)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
-        # 合并的系统视图框架
+        # Combined system view frame
         system_frame = ttk.LabelFrame(main_frame, text="System Hierarchy View")
         system_frame.pack(fill=tk.X, padx=5, pady=5)
         
-        # 总工作量显示
+        # Total effort display
         total_effort_frame = ttk.Frame(system_frame)
         total_effort_frame.pack(fill=tk.X, padx=10, pady=5)
         
@@ -233,24 +233,24 @@ class EffortEstimator:
         )
         self.total_effort_value.pack(side=tk.LEFT, padx=5)
         
-        # 创建水平排列的子系统容器
+        # Create horizontally arranged subsystem container
         subsystems_container = ttk.Frame(system_frame)
         subsystems_container.pack(fill=tk.X, padx=5, pady=2)
         
-        # 为每个子系统创建一个垂直框架
+        # Create a vertical frame for each subsystem
         for subsystem_name, subsystem in zip(self.subsystem_names, self.subsystems):
-            # 创建子系统的垂直框架
+            # Create vertical frame for subsystem
             subsys_column = ttk.Frame(subsystems_container)
             subsys_column.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=10)
             
-            # 子系统标题框架
+            # Subsystem header frame
             subsys_header = ttk.Frame(subsys_column)
             subsys_header.pack(fill=tk.X)
             
             def make_subsystem_callback(s_name):
                 return lambda: self.toggle_subsystem(s_name, self.ui_vars[s_name]['var'].get())
             
-            # 子系统复选框和标签
+            # Subsystem checkbox and label
             subsys_cb = ttk.Checkbutton(
                 subsys_header,
                 text=f"{subsystem_name}",
@@ -265,13 +265,13 @@ class EffortEstimator:
             )
             self.subsys_effort_labels[subsystem_name].pack(side=tk.LEFT, padx=5)
             
-            # 模块框架（带缩进）
+            # Module frame (with indentation)
             modules_frame = ttk.Frame(subsys_column)
-            modules_frame.pack(fill=tk.X, padx=(20, 0))  # 左侧缩进20像素
+            modules_frame.pack(fill=tk.X, padx=(20, 0))  # Left indent 20 pixels
             
             self.task_labels[subsystem_name] = {}
             
-            # 垂直排列模块
+            # Vertically arrange modules
             for module in subsystem.modules:
                 mod_name = module.name
                 self.task_labels[subsystem_name][mod_name] = {}
@@ -300,71 +300,71 @@ class EffortEstimator:
                 )
                 self.mod_effort_labels[subsystem_name][mod_name].pack(side=tk.LEFT)
         
-        # 底部框架：任务详情
+        # Bottom frame: Task details
         bottom_frame = ttk.LabelFrame(main_frame, text="Task Details")
         bottom_frame.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        # 创建标签页控件
-        self.notebook = ttk.Notebook(bottom_frame)  # 保存为实例变量以便其他方法访问
+        # Create notebook widget
+        self.notebook = ttk.Notebook(bottom_frame)  # Save as instance variable for access in other methods
         self.notebook.pack(fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        # 保存标签页引用以便后续使用
-        self.tabs = {}  # 添加这个字典来存储标签页引用
+        # Save tab references for later use
+        self.tabs = {}  # Add this dictionary to store tab references
         
         def create_scrollable_frame(parent):
-            """创建一个带滚动条的框架"""
-            # 创建容器框架
+            """Create a scrollable frame"""
+            # Create container frame
             container = ttk.Frame(parent)
             container.pack(fill=tk.BOTH, expand=True)
             
-            # 创建画布和滚动条
+            # Create canvas and scrollbar
             canvas = tk.Canvas(container)
             scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
             scrollable_frame = ttk.Frame(canvas)
             
-            # 配置滚动
+            # Configure scrolling
             def configure_scroll_region(event):
                 canvas.configure(scrollregion=canvas.bbox("all"))
             
             scrollable_frame.bind("<Configure>", configure_scroll_region)
             
-            # 创建画布窗口
+            # Create canvas window
             canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
             
-            # 配置画布大小随窗口变化
+            # Configure canvas size to change with window
             def configure_canvas(event):
                 canvas.itemconfig(canvas_window, width=event.width)
             
             canvas.bind("<Configure>", configure_canvas)
             
-            # 放置画布和滚动条
+            # Place canvas and scrollbar
             canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
             
-            # 配置画布滚动
+            # Configure canvas scrolling
             canvas.configure(yscrollcommand=scrollbar.set)
             
-            # 配置鼠标滚轮
+            # Configure mouse wheel scrolling
             def on_mousewheel(event):
                 canvas.yview_scroll(int(-1*(event.delta/120)), "units")
             
-            # 绑定鼠标滚轮事件
+            # Bind mouse wheel event
             scrollable_frame.bind("<MouseWheel>", on_mousewheel)
             canvas.bind("<MouseWheel>", on_mousewheel)
             
             return scrollable_frame, container
         
-        # 为每个子系统创建标签页
+        # Create a tab for each subsystem
         for subsystem in self.subsystems:
-            # 创建标签页
+            # Create tab
             tab = ttk.Frame(self.notebook)
             self.notebook.add(tab, text=subsystem.name)
-            self.tabs[subsystem.name] = tab  # 保存标签页引用
+            self.tabs[subsystem.name] = tab  # Save tab reference
             
-            # 创建可滚动框架
+            # Create scrollable frame
             scrollable_frame, _ = create_scrollable_frame(tab)
             
-            # 在此标签页中显示该子系统的所有模块和任务
+            # Display all modules and tasks of the subsystem in this tab
             for module in subsystem.modules:
                 module_frame = ttk.LabelFrame(scrollable_frame, text=module.name)
                 module_frame.pack(fill=tk.X, padx=5, pady=2, expand=True)
@@ -375,28 +375,28 @@ class EffortEstimator:
                     task_frame = ttk.Frame(module_frame)
                     task_frame.pack(fill=tk.X, padx=20, pady=1)
                     
-                    # 移除复选框变量，只使用单选按钮变量
-                    effort_ratio_var = tk.StringVar(value="100")  # 默认选择100%
+                    # Remove checkbox variable, only use radio button variable
+                    effort_ratio_var = tk.StringVar(value="100")  # Default select 100%
                     self.ui_vars[subsystem.name]['modules'][module.name]['tasks'][task.name] = {
                         'ratio': effort_ratio_var
                     }
                     
                     def make_ratio_callback(s_name, m_name, t_name):
                         def update_effort():
-                            # 只有当模块被启用时才更新工作量
+                            # Only update effort display when module is enabled
                             if self.module_states[s_name].get(m_name, True):
-                                # 更新总工作量显示
+                                # Update total effort display
                                 total = self.get_total_effort()
                                 self.total_effort_value.configure(text=str(total))
                                 
-                                # 更新子系统工作量显示
+                                # Update subsystem effort display
                                 subsystem = self.subsystems[self._get_subsystem_index(s_name)]
                                 subsystem_effort = subsystem.get_total_effort()
                                 self.subsys_effort_labels[s_name].configure(
                                     text=f"(Total Effort: {subsystem_effort})"
                                 )
                             
-                            # 总是更新模块工作量显示（但如果模块被禁用，会显示为0）
+                            # Always update module effort display (but will show as 0 if module is disabled)
                             module = self.subsystems[self._get_subsystem_index(s_name)].modules[self._get_module_index(s_name, m_name)]
                             module_effort = module.get_total_effort()
                             self.mod_effort_labels[s_name][m_name].configure(
@@ -404,17 +404,17 @@ class EffortEstimator:
                             )
                         return update_effort
                     
-                    # 任务名称标签
+                    # Task name label
                     ttk.Label(
                         task_frame,
                         text=task.name
                     ).grid(row=0, column=0, sticky='w', padx=(0, 10))
                     
-                    # 创建单选按钮框架
+                    # Create radio button frame
                     radio_frame = ttk.Frame(task_frame)
                     radio_frame.grid(row=0, column=1, padx=(0, 10))
                     
-                    # 添加四个单选按钮
+                    # Add four radio buttons
                     for ratio, text in [("100", "100%"), ("60", "60%"), ("25", "25%"), ("0", "0%")]:
                         ttk.Radiobutton(
                             radio_frame,
@@ -424,17 +424,17 @@ class EffortEstimator:
                             command=make_ratio_callback(subsystem.name, module.name, task.name)
                         ).pack(side=tk.LEFT, padx=2)
                     
-                    # 工作量标签
+                    # Effort label
                     effort_label = ttk.Label(
                         task_frame,
                         text=f"(Effort: {task.effort})"
                     )
                     effort_label.grid(row=0, column=2, padx=(0, 10))
                     
-                    # 分隔符
+                    # Separator
                     ttk.Label(task_frame, text="-").grid(row=0, column=3, padx=5)
                     
-                    # 描述文本
+                    # Description text
                     description_label = ttk.Label(
                         task_frame,
                         text=task.description,
@@ -443,75 +443,75 @@ class EffortEstimator:
                     )
                     description_label.grid(row=0, column=4, sticky='w', padx=5)
                     
-                    # 配置列的宽度和权重
-                    task_frame.grid_columnconfigure(0, minsize=150)  # 任务名称列
-                    task_frame.grid_columnconfigure(1, minsize=150)  # 单选按钮列
-                    task_frame.grid_columnconfigure(2, minsize=100)  # 工作量列
-                    task_frame.grid_columnconfigure(3, minsize=20)   # 分隔符列
-                    task_frame.grid_columnconfigure(4, weight=1)     # 描述文本列可扩展
+                    # Configure column width and weight
+                    task_frame.grid_columnconfigure(0, minsize=150)  # Task name column
+                    task_frame.grid_columnconfigure(1, minsize=150)  # Radio button column
+                    task_frame.grid_columnconfigure(2, minsize=100)  # Effort column
+                    task_frame.grid_columnconfigure(3, minsize=20)   # Separator column
+                    task_frame.grid_columnconfigure(4, weight=1)     # Description text column can expand
                     
-                    # 保存工作量标签的引用
+                    # Save effort label reference
                     self.task_labels[subsystem.name][module.name][task.name] = effort_label
                     effort_label.bind('<Double-Button-1>',
                         lambda e, s=subsystem.name, m=module.name, t=task:
                         self.edit_task_effort(s, m, t))
         
-        # 设置主窗口的最小大小
+        # Set minimum size for main window
         self.root.update()
         min_width = max(800, self.root.winfo_width())
         min_height = max(600, self.root.winfo_height())
         self.root.minsize(min_width, min_height)
         
-        # 设置初始窗口大小
+        # Set initial window size
         self.root.geometry(f"{min_width}x{min_height}")
         
-        # 添加可视化标签页
+        # Add visualization tab
         self.create_visualization_tab()
     
     def toggle_subsystem(self, subsystem_name, state):
-        """当子系统被选中或取消选中时的处理"""
+        """Handle when a subsystem is selected or deselected"""
         self.subsystem_states[subsystem_name] = state
         
-        # 切换到对应的标签页
+        # Switch to the corresponding tab
         tab_id = self.notebook.tabs().index(str(self.tabs[subsystem_name]))
         self.notebook.select(tab_id)
         
-        # 更新UI和内部状态
+        # Update UI and internal state
         for module_name in self.module_states[subsystem_name]:
-            # 更新模块状态
+            # Update module state
             self.module_states[subsystem_name][module_name] = state
             self.ui_vars[subsystem_name]['modules'][module_name]['var'].set(state)
             
-            # 更新任务状态
+            # Update task state
             for task_name in self.ui_vars[subsystem_name]['modules'][module_name]['tasks']:
                 self.ui_vars[subsystem_name]['modules'][module_name]['tasks'][task_name]['ratio'].set("100" if state else "0")
         
-        # 更新汇总信息
+        # Update summary information
         self.get_summary()
 
     def toggle_module(self, subsystem_name, module_name, state):
-        """当模块被选中或取消选中时的处理"""
-        # 切换到对应的标签页
+        """Handle when a module is selected or deselected"""
+        # Switch to the corresponding tab
         tab_id = self.notebook.tabs().index(str(self.tabs[subsystem_name]))
         self.notebook.select(tab_id)
         
-        # 确保模块状态字典存在
+        # Ensure module state dictionary exists
         if subsystem_name not in self.module_states:
             self.module_states[subsystem_name] = {}
         self.module_states[subsystem_name][module_name] = state
         
-        # 更新所有任务的单选按钮状态
+        # Update all task radio button states
         for task_name in self.ui_vars[subsystem_name]['modules'][module_name]['tasks']:
             ratio_var = self.ui_vars[subsystem_name]['modules'][module_name]['tasks'][task_name]['ratio']
             ratio_var.set("100" if state else "0")
         
-        # 当模块被启用时，确保其所属子系统被启用
+        # When the module is enabled, ensure its parent subsystem is enabled
         if state:
             self.subsystem_states[subsystem_name] = True
             self.ui_vars[subsystem_name]['var'].set(True)
-        # 检查是否需要禁用子系统
+        # Check if the subsystem needs to be disabled
         else:
-            # 安全地检查所有模块状态
+            # Safely check all module states
             all_modules_disabled = all(
                 not self.module_states.get(subsystem_name, {}).get(mod.name, True)
                 for mod in self.subsystems[self._get_subsystem_index(subsystem_name)].modules
@@ -520,15 +520,15 @@ class EffortEstimator:
                 self.subsystem_states[subsystem_name] = False
                 self.ui_vars[subsystem_name]['var'].set(False)
         
-        # 更新总工作量显示
+        # Update total effort display
         self.total_effort_value.configure(text=str(self.get_total_effort()))
         
-        # 更新子系统工作量显示
+        # Update subsystem effort display
         self.subsys_effort_labels[subsystem_name].configure(
             text=f"(Total Effort: {self.subsystems[self._get_subsystem_index(subsystem_name)].get_total_effort()})"
         )
         
-        # 更新模块工作量显示
+        # Update module effort display
         module_effort = self.subsystems[self._get_subsystem_index(subsystem_name)].modules[self._get_module_index(subsystem_name, module_name)].get_total_effort()
         self.mod_effort_labels[subsystem_name][module_name].configure(
             text=f"(Effort: {module_effort})"
@@ -537,13 +537,13 @@ class EffortEstimator:
     def toggle_task(self, subsystem_name, module_name, task_name, state):
         self.task_states[subsystem_name][module_name][task_name] = state
         
-        # 当任务被启用时，确保其所属模块和子系统被启用
+        # When the task is enabled, ensure its parent module and subsystem are enabled
         if state:
             self.subsystem_states[subsystem_name] = True
             self.module_states[subsystem_name][module_name] = True
             self.ui_vars[subsystem_name]['var'].set(True)
             self.ui_vars[subsystem_name]['modules'][module_name]['var'].set(True)
-        # 检查是否需要禁用模块和子系统
+        # Check if the module and subsystem need to be disabled
         else:
             all_tasks_disabled = all(not self.task_states[subsystem_name][module_name][task.name] 
                                    for task in self.subsystems[self._get_subsystem_index(subsystem_name)]
@@ -552,25 +552,25 @@ class EffortEstimator:
                 self.module_states[subsystem_name][module_name] = False
                 self.ui_vars[subsystem_name]['modules'][module_name]['var'].set(False)
                 
-                # 检查是否需要禁用子系统
+                # Check if the subsystem needs to be disabled
                 all_modules_disabled = all(not self.module_states[subsystem_name][mod.name] 
                                          for mod in self.subsystems[self._get_subsystem_index(subsystem_name)].modules)
                 if all_modules_disabled:
                     self.subsystem_states[subsystem_name] = False
                     self.ui_vars[subsystem_name]['var'].set(False)
         
-        # 更新汇总信息
+        # Update summary information
         self.get_summary()
 
     def _get_subsystem_index(self, subsystem_name):
-        """辅助方法：获取子系统索引"""
+        """Helper method: Get subsystem index"""
         for i, subsystem in enumerate(self.subsystems):
             if subsystem.name == subsystem_name:
                 return i
         return -1
 
     def _get_module_index(self, subsystem_name, module_name):
-        """辅助方法：获取模块索引"""
+        """Helper method: Get module index"""
         subsystem = self.subsystems[self._get_subsystem_index(subsystem_name)]
         for i, module in enumerate(subsystem.modules):
             if module.name == module_name:
@@ -578,26 +578,26 @@ class EffortEstimator:
         return -1
 
     def add_module_to_subsystem(self, subsystem_name, module):
-        """添加模块时初始化其状态"""
+        """Initialize its state when adding a module"""
         self.module_states[subsystem_name][module.name] = True
         self.task_states[subsystem_name][module.name] = {}
         return module
 
     def edit_task_effort(self, subsystem_name, module_name, task):
-        """编辑任务工作量的对话框"""
+        """Edit task effort dialog"""
         dialog = tk.Toplevel()
         dialog.title(f"Edit Effort - {task.name}")
         dialog.geometry("300x150")
         dialog.transient(dialog.master)
         dialog.grab_set()
         
-        # 居中显示
+        # Center display
         dialog.geometry("+%d+%d" % (
             dialog.master.winfo_rootx() + dialog.master.winfo_width()/2 - 150,
             dialog.master.winfo_rooty() + dialog.master.winfo_height()/2 - 75
         ))
         
-        # 创建输入框和标签
+        # Create input box and label
         ttk.Label(dialog, text=f"Enter new effort for {task.name}:").pack(pady=10)
         effort_var = tk.StringVar(value=str(task.effort))
         entry = ttk.Entry(dialog, textvariable=effort_var)
@@ -611,11 +611,11 @@ class EffortEstimator:
                 if new_effort < 0:
                     raise ValueError("Effort cannot be negative")
                 task.effort = new_effort
-                # 更新UI显示
+                # Update UI display
                 self.task_labels[subsystem_name][module_name][task.name].configure(
                     text=f"(Effort: {new_effort})"
                 )
-                # 更新所有相关的工作量显示
+                # Update all related effort displays
                 self.update_all_effort_labels(subsystem_name, module_name)
                 dialog.destroy()
             except ValueError as e:
@@ -625,83 +625,83 @@ class EffortEstimator:
         def cancel():
             dialog.destroy()
         
-        # 创建按钮框架
+        # Create button frame
         button_frame = ttk.Frame(dialog)
         button_frame.pack(pady=20)
         
         ttk.Button(button_frame, text="OK", command=validate_and_save).pack(side=tk.LEFT, padx=10)
         ttk.Button(button_frame, text="Cancel", command=cancel).pack(side=tk.LEFT)
         
-        # 绑定回车键到确定按钮
+        # Bind Enter key to OK button
         dialog.bind('<Return>', lambda e: validate_and_save())
-        # 绑定Escape键到取消按钮
+        # Bind Escape key to Cancel button
         dialog.bind('<Escape>', lambda e: cancel())
 
     def update_all_effort_labels(self, subsystem_name, module_name):
-        """更新所有相关的工作量标签"""
-        # 更新模块工作量
+        """Update all related effort labels"""
+        # Update module effort
         module = self.subsystems[self._get_subsystem_index(subsystem_name)].modules[self._get_module_index(subsystem_name, module_name)]
         self.mod_effort_labels[subsystem_name][module_name].configure(
             text=f"(Effort: {module.get_total_effort()})"
         )
         
-        # 更新子系统工作量
+        # Update subsystem effort
         subsystem = self.subsystems[self._get_subsystem_index(subsystem_name)]
         self.subsys_effort_labels[subsystem_name].configure(
             text=f"(Total Effort: {subsystem.get_total_effort()})"
         )
         
-        # 更新项目总工作量
+        # Update total project effort
         self.total_effort_value.configure(text=str(self.get_total_effort()))
 
     def get_summary(self):
-        """更新所有工作量显示"""
-        # 更新总工作量
+        """Update all effort displays"""
+        # Update total effort
         self.total_effort_value.configure(text=str(self.get_total_effort()))
         
-        # 更新每个子系统的工作量
+        # Update each subsystem's effort
         for subsystem in self.subsystems:
             self.subsys_effort_labels[subsystem.name].configure(
                 text=f"(Total Effort: {subsystem.get_total_effort()})"
             )
-            # 更新该子系统下每个模块的工作量
+            # Update effort for each module under this subsystem
             for module in subsystem.modules:
                 self.mod_effort_labels[subsystem.name][module.name].configure(
                     text=f"(Effort: {module.get_total_effort()})"
                 )
 
     def create_visualization_tab(self):
-        """创建可视化标签页"""
+        """Create visualization tab"""
         import matplotlib.pyplot as plt
         from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
         from matplotlib.figure import Figure
         import tkinter as tk
-        from tkinter import ttk  # 添加这行导入
+        from tkinter import ttk  # Add this line import
         
-        # 创建可视化标签页
+        # Create visualization tab
         viz_tab = ttk.Frame(self.notebook)
         self.notebook.add(viz_tab, text="Visualization")
         
-        # 创建左右分栏
+        # Create left and right frames
         left_frame = ttk.Frame(viz_tab)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         
         right_frame = ttk.Frame(viz_tab)
         right_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=5, pady=5)
         
-        # 创建图表
+        # Create pie chart
         def create_subsystem_pie():
-            # 收集数据
+            # Collect data
             labels = []
             sizes = []
             for subsystem in self.subsystems:
                 if self.subsystem_states.get(subsystem.name, True):
                     effort = subsystem.get_total_effort()
-                    if effort > 0:  # 只显示非零工作量
+                    if effort > 0:  # Only show non-zero effort
                         labels.append(subsystem.name)
                         sizes.append(effort)
             
-            # 创建饼图
+            # Create pie chart
             fig = Figure(figsize=(6, 4))
             ax = fig.add_subplot(111)
             ax.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
@@ -711,7 +711,7 @@ class EffortEstimator:
             return fig
         
         def create_module_bar():
-            # 收集数据
+            # Collect data
             modules = []
             efforts = []
             colors = []
@@ -721,12 +721,12 @@ class EffortEstimator:
                     for module in subsystem.modules:
                         if self.module_states[subsystem.name].get(module.name, True):
                             effort = module.get_total_effort()
-                            if effort > 0:  # 只显示非零工作量
+                            if effort > 0:  # Only show non-zero effort
                                 modules.append(f"{subsystem.name}\n{module.name}")
                                 efforts.append(effort)
                                 colors.append(plt.cm.Set3(len(modules) % 12))
             
-            # 创建柱状图
+            # Create bar chart
             fig = Figure(figsize=(6, 4))
             ax = fig.add_subplot(111)
             bars = ax.bar(range(len(modules)), efforts, color=colors)
@@ -735,7 +735,7 @@ class EffortEstimator:
             ax.set_title('Module Effort Comparison')
             ax.set_ylabel('Effort')
             
-            # 添加数值标签
+            # Add value labels
             for bar in bars:
                 height = bar.get_height()
                 ax.text(bar.get_x() + bar.get_width()/2., height,
@@ -745,7 +745,7 @@ class EffortEstimator:
             fig.tight_layout()
             return fig
         
-        # 创建图表显示区域
+        # Create chart display area
         pie_canvas = FigureCanvasTkAgg(create_subsystem_pie(), left_frame)
         pie_canvas.draw()
         pie_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
@@ -754,15 +754,15 @@ class EffortEstimator:
         bar_canvas.draw()
         bar_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         
-        # 添加刷新按钮
+        # Add refresh button
         def refresh_charts():
-            # 清除旧图表
+            # Clear old charts
             for widget in left_frame.winfo_children():
                 widget.destroy()
             for widget in right_frame.winfo_children():
                 widget.destroy()
             
-            # 创建新图表
+            # Create new charts
             pie_canvas = FigureCanvasTkAgg(create_subsystem_pie(), left_frame)
             pie_canvas.draw()
             pie_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
@@ -771,17 +771,17 @@ class EffortEstimator:
             bar_canvas.draw()
             bar_canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
             
-            # 确保刷新按钮只添加一次
+            # Ensure refresh button is only added once
             if not refresh_button.winfo_ismapped():
                 refresh_button.pack(pady=5)
         
         ttk.Button(viz_tab, text="Refresh Charts", command=refresh_charts).pack(pady=5)
 
-# 修改主程序入口
+# Modify main program entry
 if __name__ == "__main__":
-    # 使用CSV文件初始化估算器
+    # Use CSV file to initialize estimator
     estimator = EffortEstimator("effort_data.csv")
-    # 启动UI界面
+    # Start UI interface
     estimator.create_ui()
-    # 在这里调用 mainloop
+    # Call mainloop here
     estimator.root.mainloop()

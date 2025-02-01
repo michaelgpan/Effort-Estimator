@@ -753,14 +753,14 @@ class EffortEstimator:
         
         dialog = tk.Toplevel()
         dialog.title("Edit Other Effort")
-        dialog.geometry("400x250")
+        dialog.geometry("400x180")  # Reduced height since we're using single line
         dialog.transient(self.root)
         dialog.grab_set()
         
         # Center display
         dialog.geometry("+%d+%d" % (
             self.root.winfo_rootx() + self.root.winfo_width()/2 - 200,
-            self.root.winfo_rooty() + self.root.winfo_height()/2 - 125
+            self.root.winfo_rooty() + self.root.winfo_height()/2 - 90
         ))
         
         # Create input fields
@@ -769,10 +769,10 @@ class EffortEstimator:
         effort_entry = ttk.Entry(dialog, textvariable=effort_var, width=40)
         effort_entry.pack(pady=5)
         
-        ttk.Label(dialog, text="Comments:").pack(pady=(10,5))
-        comment_text = tk.Text(dialog, height=4, width=40)
-        comment_text.pack(pady=5)
-        comment_text.insert('1.0', module.manual_comment)
+        ttk.Label(dialog, text="Description (max 50 characters):").pack(pady=(10,5))
+        comment_var = tk.StringVar(value=module.manual_comment)
+        comment_entry = ttk.Entry(dialog, textvariable=comment_var, width=40)
+        comment_entry.pack(pady=5)
         
         def validate_and_save():
             try:
@@ -780,9 +780,16 @@ class EffortEstimator:
                 if new_effort < 0:
                     raise ValueError("Effort cannot be negative")
                 
+                # Get and validate comment
+                comment = comment_var.get().strip()
+                if len(comment) > 50:
+                    tk.messagebox.showerror("Error", "Description must be 50 characters or less!")
+                    comment_entry.focus()
+                    return
+                
                 # Update module data
                 module.manual_effort = new_effort
-                module.manual_comment = comment_text.get('1.0', 'end-1c')
+                module.manual_comment = comment
                 
                 # Update display text
                 display_text = f"Other - {module.manual_comment}" if module.manual_comment else "Other"

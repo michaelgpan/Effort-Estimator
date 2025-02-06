@@ -521,31 +521,31 @@ class EffortEstimator:
     
     def toggle_subsystem(self, subsystem_name, state):
         """Handle when subsystem is selected or deselected"""
+        # Update state
         self.subsystem_states[subsystem_name] = state
         
         # Switch to corresponding tab
         tab_id = self.notebook.tabs().index(str(self.tabs[subsystem_name]))
         self.notebook.select(tab_id)
         
-        # Update UI and internal state
+        # Update module states
         for module_name in self.module_states[subsystem_name]:
-            # Update module state
             self.module_states[subsystem_name][module_name] = state
             self.ui_vars[subsystem_name]['modules'][module_name]['var'].set(state)
-            
-            # Update task state
-            for task_name in self.ui_vars[subsystem_name]['modules'][module_name]['tasks']:
-                self.ui_vars[subsystem_name]['modules'][module_name]['tasks'][task_name]['ratio'].set("100" if state else "0")
         
         # Update summary information
         self.get_summary()
 
     def toggle_module(self, subsystem_name, module_name, enabled):
         """Toggle module enabled/disabled state"""
-        # First update the module state
+        # Update module state
         self.module_states[subsystem_name][module_name] = enabled
         
-        # Find the actual module object (it might start with "Other")
+        # Switch to corresponding tab
+        tab_id = self.notebook.tabs().index(str(self.tabs[subsystem_name]))
+        self.notebook.select(tab_id)
+        
+        # Update effort displays
         target_module = None
         target_subsystem = None
         for subsys in self.subsystems:
@@ -559,7 +559,7 @@ class EffortEstimator:
         
         if target_module and target_subsystem:
             # Calculate new efforts
-            module_effort = target_module.get_total_effort()  # This should be 0 if disabled
+            module_effort = target_module.get_total_effort()
             subsystem_effort = target_subsystem.get_total_effort()
             total_effort = self.get_total_effort()
             
